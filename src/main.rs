@@ -1,4 +1,4 @@
-use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, EOF, FILE};
+use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, EOF, FILE, fgetc, ungetc};
 use std::ffi::CString;
 
 struct File {
@@ -10,12 +10,22 @@ of `ffi::CString` methods during debugging, and didn't want come from this stand
 
 impl File {
     fn open(_path: &str) -> Option<Self> {
-        let path_c = CString::new(_path).expect("it's exercise --- `_path` should be there");
+        let path_c = CString::new(_path).expect("it's an exercise --- `_path` should be there");
         let mode = CString::new("r").unwrap();
         let result = unsafe { fopen(path_c.as_ptr(), mode.as_ptr()) };
         if result.is_null() {
+            // `fn` signature received for the exercise returns `Option`, so let's just `println!` error description and return `None`
+            println!("Error occurred while opening file."); // https://www.ibm.com/docs/en/i/7.2?topic=value-example-checking-errno-fopen-function
             None
         } else {
+            unsafe { // https://stackoverflow.com/a/13566274
+                let c = fgetc(result);
+                if c == EOF {
+                    println!("Attention! File is empty.");
+                } else {
+                    ungetc(c, result);
+                }
+            }
             Some(File { stream: result })
         }
     }
@@ -39,9 +49,8 @@ impl File {
         Some(
             buffer_current
                 .into_iter()
-                .map(|x| x.to_ne_bytes()[0] as u8)
-                .skip_while(|x| x == &0)
-                .map(|x| x as char)
+                .map(|x| x.to_ne_bytes()[0] as char)
+                .take_while(|x| x != &'\0')
                 .collect(),
         )
     }
