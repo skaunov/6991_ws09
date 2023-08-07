@@ -56,8 +56,8 @@ impl File {
             .into_iter()
             .take_while(|nul_not| nul_not != &0)
             .collect();
-        let result = unsafe { CString::from_vec_unchecked(buffer).into_string() };
-        result.ok()
+        let result = unsafe { CString::from_vec_unchecked(buffer) };
+        result.into_string().ok()
     }
 
     fn read_i64(&mut self) -> Option<i64> {
