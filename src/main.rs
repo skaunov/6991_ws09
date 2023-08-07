@@ -1,4 +1,4 @@
-use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, EOF, FILE, fgetc, ungetc};
+use libc::{c_char, c_double, c_int, fclose, fgetc, fgets, fopen, fscanf, ungetc, EOF, FILE};
 use std::ffi::CString;
 
 struct File {
@@ -18,7 +18,8 @@ impl File {
             println!("Error occurred while opening file."); // https://www.ibm.com/docs/en/i/7.2?topic=value-example-checking-errno-fopen-function
             None
         } else {
-            unsafe { // https://stackoverflow.com/a/13566274
+            unsafe {
+                // https://stackoverflow.com/a/13566274
                 let c = fgetc(result);
                 if c == EOF {
                     println!("Attention! File is empty.");
@@ -33,26 +34,30 @@ impl File {
     /// Returns `None` if file couldn't been read (to `String`) OR it
     /// doesn't contain EOL.
     fn read_string(&mut self) -> Option<String> {
-        let mut buffer_current = [i8::default(); 512];
+        let mut buffer_current = [0; 512];
         // looks like it's ok to get just long enough start of the line; let it be 512 symbols
         let success = unsafe {
             fgets(
                 buffer_current.as_mut_ptr() as *mut c_char,
-                // note two bytes for EOL symbols in `buf`
-                510,
+                /* TODO
+                    * understand how exactly suggested way is better while working with text than
+                the naive path I was taken (I feel that, but not yet understand)
+                    * compare this part of two suggestion variants; https://users.rust-lang.org/t/exploring-ffi-workshop/97995/5?u=skaunov
+                buffer.capacity() / size_of::<c_char>()
+                */
+                buffer_current.len() as i32,
                 self.stream,
             )
         };
         if success.is_null() {
             return None;
         }
-        Some(
-            buffer_current
-                .into_iter()
-                .map(|x| x.to_ne_bytes()[0] as char)
-                .take_while(|x| x != &'\0')
-                .collect(),
-        )
+        let buffer = buffer_current
+            .into_iter()
+            .take_while(|nul_not| nul_not != &0)
+            .collect();
+        let result = unsafe { CString::from_vec_unchecked(buffer).into_string() };
+        result.ok()
     }
 
     fn read_i64(&mut self) -> Option<i64> {
