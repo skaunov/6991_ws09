@@ -1,4 +1,6 @@
-use libc::{c_char, c_double, c_int, fclose, fgets, fopen, fscanf, EOF, FILE, fgetc, ungetc};
+use libc::{
+    c_char, c_double, c_int, c_uchar, fclose, fgetc, fgets, fopen, fscanf, ungetc, EOF, FILE,
+};
 use std::ffi::CString;
 
 struct File {
@@ -18,7 +20,8 @@ impl File {
             println!("Error occurred while opening file."); // https://www.ibm.com/docs/en/i/7.2?topic=value-example-checking-errno-fopen-function
             None
         } else {
-            unsafe { // https://stackoverflow.com/a/13566274
+            unsafe {
+                // https://stackoverflow.com/a/13566274
                 let c = fgetc(result);
                 if c == EOF {
                     println!("Attention! File is empty.");
@@ -78,7 +81,7 @@ impl File {
         let mode = CString::new(" %c").unwrap();
         match unsafe { fscanf(self.stream, mode.as_ptr(), &mut result) } {
             EOF | 0 => None,
-            _ => Some(result.to_be_bytes()[0].into()),
+            _ => Some(result as c_uchar as char),
         }
     }
 }
