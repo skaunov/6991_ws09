@@ -36,29 +36,22 @@ impl File {
     /// Returns `None` if file couldn't been read (to `String`) OR it
     /// doesn't contain EOL.
     fn read_string(&mut self) -> Option<String> {
-        let mut buffer_current = [0; 512];
+        let mut buffer_current: Vec<u8> = Vec::with_capacity(512);
         // looks like it's ok to get just long enough start of the line; let it be 512 symbols
-        let success = unsafe {
-            fgets(
+        /* here it's assumed that line won't exceed that arbitrary length;
+        or a reading loop should be added */
+        let result = unsafe {
+            let success = fgets(
                 buffer_current.as_mut_ptr() as *mut c_char,
-                /* TODO
-                    * understand how exactly suggested way is better while working with text than
-                the naive path I was taken (I feel that, but not yet understand)
-                    * compare this part of two suggestion variants; https://users.rust-lang.org/t/exploring-ffi-workshop/97995/5?u=skaunov
-                buffer.capacity() / size_of::<c_char>()
-                */
-                buffer_current.len() as i32,
+                buffer_current.capacity() as i32,
                 self.stream,
-            )
+            );
+            if success.is_null() {
+                return None;
+            }
+            buffer_current.set_len(libc::strlen(success));
+            CString::from_vec_unchecked(buffer_current)
         };
-        if success.is_null() {
-            return None;
-        }
-        let buffer = buffer_current
-            .into_iter()
-            .take_while(|nul_not| nul_not != &0)
-            .collect();
-        let result = unsafe { CString::from_vec_unchecked(buffer) };
         result.into_string().ok()
     }
 
