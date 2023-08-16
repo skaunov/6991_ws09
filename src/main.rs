@@ -1,4 +1,6 @@
-use libc::{c_char, c_double, c_int, fclose, fgetc, fgets, fopen, fscanf, ungetc, EOF, FILE};
+use libc::{
+    c_char, c_double, c_int, c_uchar, fclose, fgetc, fgets, fopen, fscanf, ungetc, EOF, FILE,
+};
 use std::ffi::CString;
 
 struct File {
@@ -83,7 +85,7 @@ impl File {
         let mode = CString::new(" %c").unwrap();
         match unsafe { fscanf(self.stream, mode.as_ptr(), &mut result) } {
             EOF | 0 => None,
-            _ => Some(result.to_be_bytes()[0].into()),
+            _ => Some(result as c_uchar as char),
         }
     }
 }
