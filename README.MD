@@ -1,5 +1,7 @@
 This is a solution for [workshop]. Since this one turned out for me to be not as straightforward as others I'm asking an ([independent]) review for this one.
 
+I want to thank all reviewers, especially <https://users.rust-lang.org/u/nerditation> whos comments led to considerably different approach to solution which I left in a separate <branch:ditch-`map`-from-`read_string`>.
+
 ### few notes/comments on the solution
 
 I feel like there should be _safety arguments_ where `unsafe` is used. The only reason of their absense is that I don't actually understand what is going on in `libc` and FFI, and studying it to add the arguments is to not only learn Rustonomicon (which isn't *that* bad), but also become C programmer (which isn't on the schedule).
